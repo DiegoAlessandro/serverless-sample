@@ -12,11 +12,65 @@ provider:
   name: aws
   runtime: nodejs10.x
   region: ap-northeast-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - xray:PutTraceSegments
+        - xray:PutTelemetryRecords
+      Resource: "*"
+    - Effect: Allow
+      Action:
+        - logs:CreateLogGroup
+        - logs:CreateLogStream
+        - logs:PutLogEvents
+      Resource: '*'
+    - Effect: Allow
+      Action:
+        - es:ESHttpPost
+        - es:ESHttpPut
+        - es:ESHttpDelete
+        - es:ESHttpGet
+      Resource:
+        - { "Fn::GetAtt": ["ElasticSearchInstance", "DomainArn"] }
+        - { "Fn::Join": ["", ["Fn::GetAtt": ["ElasticSearchInstance", "DomainArn"], "/*"]] }
+
 
 functions:
   hello:
+    name: aws-typescript-elasticsearch
     handler: handler.hello
+    memorySize: 128
+    timeout: 60
     events:
       - http:
           method: get
           path: hello
+    environment:
+      elasticURL:
+        Fn::GetAtt: [ ElasticSearchInstance, DomainEndpoint]
+
+resources:
+  Resources:
+    ElasticSearchInstance:
+      Type: AWS::Elasticsearch::Domain
+      Properties:
+        ElasticsearchVersion: 5.3
+        DomainName: "elasticsearch-instance"
+        EBSOptions:
+          EBSEnabled: true
+          VolumeType: gp2
+          VolumeSize: 10
+        ElasticsearchClusterConfig:
+          InstanceType: t2.small.elasticsearch
+          InstanceCount: 1
+          DedicatedMasterEnabled: false
+          ZoneAwarenessEnabled: false
+        AccessPolicies:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal:
+                AWS: "*"
+              Action: "es:*"
+              Resource: "*"
+
