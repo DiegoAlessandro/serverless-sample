@@ -9,7 +9,7 @@
   "dependencies": {
     "@types/aws-sdk": "^2.7.0",
     "@types/elasticsearch": "^5.0.35",
-    "aws-sdk": "^2.550.0",
+    "aws-sdk": "^2.814.0",
     "elasticsearch": "^16.4.0",
     "source-map-support": "^0.5.10"
   },
